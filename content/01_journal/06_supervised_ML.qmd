@@ -94,19 +94,5 @@ predictions = predict(bikes_fit, test_data)
 
 # Create a yardstick tibble using the true labels and predicted values
 evaluation_data <- tibble::tibble(price = test_data$price, predicted = predictions)
-
-# Evaluate the model performance using yardstick functions
-evaluation_data %>%
-  metrics(truth = price, estimate = predicted) %>%
-  select(-.config)
-
 ```
-
-
-
-
-
-
-
-
 
