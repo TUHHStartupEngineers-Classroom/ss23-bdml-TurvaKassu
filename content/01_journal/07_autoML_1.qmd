@@ -1,0 +1,201 @@
+# Challenge 07: Auto ML 1
+
+## Code to visualize attrition data
+
+Loading the libraries and data
+
+```{r}
+# Libraries 
+library(tidyverse)
+library(readxl)
+library(skimr)
+library(GGally)
+
+# Load Data data definitions
+
+path_data_definitions <- "07_Data/data_definitions.xlsx"
+definitions_raw_tbl   <- read_excel(path_data_definitions, sheet = 1, col_names = FALSE)
+
+# Load Data
+
+employee_attrition_tbl <- read_csv("07_data\\datasets-1067-1925-WA_Fn-UseC_-HR-Employee-Attrition.txt")
+employee_attrition_tbl
+```
+
+
+Function to plot different features
+
+```{r}
+# Create data tibble, to potentially debug the plot_ggpairs function (because it has a data argument)
+
+plot_ggpairs <- function(data, color = NULL, density_alpha = 0.5) {
+    
+    color_expr <- enquo(color)
+    
+    if (rlang::quo_is_null(color_expr)) {
+        
+        g <- data %>%
+            ggpairs(lower = "blank") 
+        
+    } else {
+        
+        color_name <- quo_name(color_expr)
+        
+        g <- data %>%
+            ggpairs(mapping = aes_string(color = color_name), 
+                    lower = "blank", legend = 1,
+                    diag = list(continuous = wrap("densityDiag", 
+                                                  alpha = density_alpha))) +
+            theme(legend.position = "bottom")
+    }
+    
+    return(g)
+    
+}
+```
+
+
+Explore Features by Category
+
+```{r}
+#   1. Descriptive features: age, gender, marital status 
+employee_attrition_tbl %>%
+    select(Attrition, Age, Gender, MaritalStatus, NumCompaniesWorked, Over18, DistanceFromHome) %>%
+    plot_ggpairs(Attrition)
+
+#   2. Employment features: department, job role, job level
+employee_attrition_tbl %>%
+    select(Attrition, contains("employee"), contains("department"), contains("job")) %>%
+    plot_ggpairs(Attrition) 
+
+#   3. Compensation features: HourlyRate, MonthlyIncome, StockOptionLevel 
+employee_attrition_tbl %>%
+    select(Attrition, contains("income"), contains("rate"), contains("salary"), contains("stock")) %>%
+    plot_ggpairs(Attrition)
+
+#   4. Survey Results: Satisfaction level, WorkLifeBalance 
+employee_attrition_tbl %>%
+    select(Attrition, contains("satisfaction"), contains("life")) %>%
+    plot_ggpairs(Attrition)
+
+#   5. Performance Data: Job Involvment, Performance Rating
+employee_attrition_tbl %>%
+    select(Attrition, contains("performance"), contains("involvement")) %>%
+    plot_ggpairs(Attrition)
+
+#   6. Work-Life Features 
+employee_attrition_tbl %>%
+    select(Attrition, contains("overtime"), contains("travel")) %>%
+    plot_ggpairs(Attrition)
+
+#   7. Training and Education 
+employee_attrition_tbl %>%
+    select(Attrition, contains("training"), contains("education")) %>%
+    plot_ggpairs(Attrition)
+
+#   8. Time-Based Features: Years at company, years in current role
+employee_attrition_tbl %>%
+    select(Attrition, contains("years")) %>%
+    plot_ggpairs(Attrition)
+```
+
+
+
+
+
+## CHALLENGE QUESTIONS
+
+
+#### 1. Compensation Features
+
+What can you deduce about the interaction between Monthly Income and Attrition?
+
+1. Those that are leaving the company have a higher Monthly Income
+2. That those are staying have a lower Monthly Income
+3. **Those that are leaving have a lower Monthly Income**
+4. It's difficult to deduce anything based on the visualization
+
+
+#### 2. Compensation Features
+
+What can you deduce about the interaction between Percent Salary Hike and Attrition?
+
+1.Those that are leaving the company have a higher Percent Salary Hike
+2.Those that are staying have a lower Percent Salary Hike
+3. Those that are leaving have lower Percent Salary Hike
+4. **It's difficult to deduce anything based on the visualization**
+
+
+#### 3. Compensation Features
+
+What can you deduce about the interaction between Stock Option Level and Attrition?
+
+1. Those that are leaving the company have a higher stock option level
+2. **Those that are staying have a higher stock option level**
+3. It's difficult to deduce anything based on the visualization
+
+
+#### 4. Survey Results
+
+What can you deduce about the interaction between Environment Satisfaction and Attrition?
+
+1. **A higher proportion of those leaving have a low environment satisfaction level**
+2. A higher proportion of those leaving have a high environment satisfaction level
+3. It's difficult to deduce anything based on the visualization
+
+
+#### 5. Survey Results
+
+What can you deduce about the interaction between Work Life Balance and Attrition
+
+1. Those that are leaving have higher density of 2's and 3's
+2. **Those that are staying have a higher density of 2's and 3's**
+3. Those that are staying have a lower density of 2's and 3's
+4. It's difficult to deduce anything based on the visualization
+
+
+#### 6. Performance Data
+
+What Can you deduce about the interaction between Job Involvement and Attrition?
+
+1. **Those that are leaving have a lower density of 3's and 4's**
+2. Those that are leaving have a lower density of 1's and 2's
+3. Those that are staying have a lower density of 2's and 3's
+4. It's difficult to deduce anything based on the visualization
+
+
+#### 7. Work-Life Features
+
+What can you deduce about the interaction between Over Time and Attrition?
+
+1. The proportion of those leaving that are working Over Time are high compared to those that are not leaving
+2. **The proportion of those staying that are working Over Time are high compared to those that are not staying**
+
+
+#### 8. Training and Education
+
+What can you deduce about the interaction between Training Times Last Year and Attrition
+
+1. People that leave tend to have more annual trainings
+2. People that leave tend to have less annual trainings
+3. **It's difficult to deduce anything based on the visualization**
+
+
+#### 9. Time-Based Features
+
+What can you deduce about the interaction between Years At Company and Attrition
+
+1. People that leave tend to have more working years at the company
+2. **People that leave tend to have less working years at the company**
+3. It's difficult to deduce anything based on the visualization
+
+
+#### 10. Time-Based Features
+
+What can you deduce about the interaction between Years Since Last Promotion and Attrition?
+
+1. Those that are leaving have more years since last promotion than those that are staying
+2. Those that are leaving have fewer years since last promotion than those that are staying
+3. **It's difficult to deduce anything based on the visualization**
+
+
