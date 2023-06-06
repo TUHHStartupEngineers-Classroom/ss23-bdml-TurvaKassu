@@ -7,6 +7,8 @@ library(h2o)
 library(skimr)
 library(rsample)
 library(recipes)
+library(cowplot)
+library(glue)
 
 ```
 
@@ -103,7 +105,7 @@ h2o.getModel(best_model_id) %>%
   h2o.saveModel(path = "08_data\\models")
 ```
 
-### Predicting went_on_bacorder for testing data
+### Predicting went_on_backorder for testing data
 
 ```{r}
 # Loading model
@@ -116,6 +118,228 @@ typeof(predictions)
 predictions_tbl <- predictions %>% as_tibble()
 predictions_tbl
 ```
+
+
+
+# Challenge Performance measurements
+
+### Visualizing the leaderboard
+
+Wrangling data
+```{r}
+data_transformed_tbl <- automl_models_h2o@leaderboard %>%
+        as_tibble() %>%
+        select(-c(aucpr, mean_per_class_error, rmse, mse)) %>% 
+        mutate(model_type = str_extract(model_id, "[^_]+")) %>%
+        slice(1:15) %>% 
+        rownames_to_column(var = "rowname") %>%
+        
+        # Reordering factors
+        mutate(
+          model_id   = as_factor(model_id) %>% reorder(auc),
+          model_type = as.factor(model_type)
+          ) %>% 
+          pivot_longer(cols = -c(model_id, model_type, rowname), 
+                       names_to = "key", 
+                       values_to = "value", 
+                       names_transform = list(key = forcats::fct_inorder)
+                       ) %>% 
+        mutate(model_id = paste0(rowname, ". ", model_id) %>% as_factor() %>% fct_rev())
+
+```
+
+
+Plotting leaderboard
+
+```{r}
+data_transformed_tbl %>%
+        ggplot(aes(value, model_id, color = model_type)) +
+        geom_point(size = 3) +
+        geom_label(aes(label = round(value, 2), hjust = "inward")) +
+        
+        # Facet to break out logloss and auc
+        facet_wrap(~ key, scales = "free_x") +
+        labs(title = "Leaderboard Metrics",
+             subtitle = paste0("Ordered by: ", "auc"),
+             y = "Model Postion, Model ID", x = "") + 
+        theme(legend.position = "bottom")
+```
+
+Lets tune the GBM model that scored the third best score
+
+### Tuning the Stacked Ensemble model with grid search
+
+
+```{r}
+hyper_params <- list(
+  ntrees = c(50, 100, 150),
+  max_depth = c(3, 5, 7),
+  learn_rate = c(0.1, 0.01, 0.001)
+)
+
+# Create the grid of GBM models
+grid <- h2o.grid(
+  algorithm = "gbm",
+  grid_id = "gbm_grid",
+  hyper_params = hyper_params,
+  training_frame = train_h2o,
+  validation_frame = valid_h2o,
+  y = "went_on_backorder"
+)
+```
+Let's test the model
+```{r}
+grid
+
+h2o.getGrid(grid_id = "gbm_grid", sort_by = "auc", decreasing = TRUE)
+```
+
+It seems that the logloss of the best model was few fractions better, but
+the auc was equally worse. Let's use the Stacked Ensemble model in the 
+future visualisazions.
+
+
+### Finding the optimal threshold for saved Stacked ensemble model
+
+Loading the model and getting the performance measurements into tibble
+
+```{r}
+stacked_ensemble_h2o <- h2o.loadModel("08_data\\models\\StackedEnsemble_BestOfFamily_2_AutoML_1_20230605_154513")
+performance_h2o <- h2o.performance(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))
+
+performance_tbl <- performance_h2o %>%
+    h2o.metric() %>%
+    as_tibble()
+```
+
+
+
+
+Lets set a custom theme
+
+```{r}
+theme_new <- theme(
+      legend.position  = "bottom",
+      legend.key       = element_blank(),
+      panel.background = element_rect(fill   = "transparent"),
+      panel.border     = element_rect(color = "black", fill = NA, size = 0.5),
+      panel.grid.major = element_line(color = "grey", linewidth = 0.333)
+      ) 
+```
+
+
+Plotting the optimal threshold with best F1-score
+
+```{r}
+performance_tbl %>%
+    filter(f1 == max(f1))
+
+performance_tbl %>%
+    ggplot(aes(x = threshold)) +
+    geom_line(aes(y = precision), color = "blue", size = 1) +
+    geom_line(aes(y = recall), color = "red", size = 1) +
+    
+    # Insert line where precision and recall are harmonically optimized
+    geom_vline(xintercept = h2o.find_threshold_by_max_metric(performance_h2o, "f1")) +
+    labs(title = "Precision vs Recall", y = "value") +
+    theme_new
+```
+
+
+### ROC Plot
+
+```{r}
+# Get the predictions on the validation data
+predictions <- h2o.predict(stacked_ensemble_h2o, valid_h2o)
+
+# Get the ROC performance object
+roc <- h2o.performance(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))
+
+# Plot the ROC curve
+roc_p <- plot(roc, type = "roc", main = 'roc')
+```
+
+### Precission VS Recall
+
+```{r}
+pr <- h2o.performance(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))
+
+# Plot the Precision-Recall curve
+pr_p <- plot(pr, type = "pr", main = "Precision-Recall Curve", xlab = "Recall", ylab = "Precision")
+```
+
+### Gain & Lift plots
+
+```{r}
+gain_lift_tbl <- performance_h2o %>%
+    h2o.gainsLift() %>%
+    as.tibble()
+
+## Gain Chart
+
+gain_transformed_tbl <- gain_lift_tbl %>% 
+    select(group, cumulative_data_fraction, cumulative_capture_rate, cumulative_lift) %>%
+    select(-contains("lift")) %>%
+    mutate(baseline = cumulative_data_fraction) %>%
+    rename(gain     = cumulative_capture_rate) %>%
+    # prepare the data for the plotting (for the color and group aesthetics)
+    pivot_longer(cols = c(gain, baseline), values_to = "value", names_to = "key")
+
+gain_p <- gain_transformed_tbl %>%
+    ggplot(aes(x = cumulative_data_fraction, y = value, color = key)) +
+    geom_line(size = 1.5) +
+    labs(
+        title = "Gain Chart",
+        x = "Cumulative Data Fraction",
+        y = "Gain"
+    ) +
+    theme_new
+
+gain_p
+
+
+## Lift Chart
+lift_transformed_tbl <- gain_lift_tbl %>% 
+    select(group, cumulative_data_fraction, cumulative_capture_rate, cumulative_lift) %>%
+    select(-contains("capture")) %>%
+    mutate(baseline = 1) %>%
+    rename(lift = cumulative_lift) %>%
+    pivot_longer(cols = c(lift, baseline), values_to = "value", names_to = "key")
+
+lift_p <- lift_transformed_tbl %>%
+    ggplot(aes(x = cumulative_data_fraction, y = value, color = key)) +
+    geom_line(size = 1.5) +
+    labs(
+        title = "Lift Chart",
+        x = "Cumulative Data Fraction",
+        y = "Lift"
+    ) +
+    theme_new
+
+lift_p
+```
+
+### Dashboard with cowplot
+
+```{r}
+# Combine plots
+p <- cowplot::plot_grid(roc_p, pr_p, gain_p,  lift_p, ncol = 2)
+
+# Title
+p_title <- ggdraw() + 
+        draw_label("H2O Model Metrics", size = 18, fontface = "bold", 
+                   color = "#2C3E50")
+
+# Combine everything
+ret <- plot_grid(p_title,  p,
+                 ncol = 1, rel_heights = c(0.05, 0.05, 1, 0.05 * 4))
+
+ret
+```
+
+
+
+
 
 
 
