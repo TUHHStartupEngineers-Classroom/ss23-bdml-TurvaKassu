@@ -1,0 +1,149 @@
+# Explanations with Lime
+
+## Part 1: plot_features
+
+Lets start by loading the libraries and data
+
+```{r}
+library(h2o)
+library(recipes)
+library(readxl)
+library(tidyverse)
+library(tidyquant)
+library(lime)
+library(rsample)
+```
+
+```{r}
+# Load Data
+employee_attrition_tbl <- read_csv("07_data\\datasets-1067-1925-WA_Fn-UseC_-HR-Employee-Attrition.csv")
+definitions_raw_tbl    <- read_excel("07_data\\data_definitions.xlsx", sheet = 1, col_names = FALSE)
+
+```
+
+Creating the h2o automl model
+
+```{r}
+h2o.init()
+# Split into test and train
+set.seed(seed = 1113)
+split_obj <- rsample::initial_split(employee_attrition_tbl, prop = 0.85)
+
+# Assign training and test data
+train_readable_tbl <- training(split_obj)
+test_readable_tbl  <- testing(split_obj)
+
+# ML Preprocessing Recipe 
+recipe_obj <- recipe(Attrition ~ ., data = train_readable_tbl) %>%
+                step_zv(all_predictors()) %>%
+                step_mutate_at(c("JobLevel", "StockOptionLevel"), fn = as.factor) %>% 
+                prep()
+
+recipe_obj
+
+train_tbl <- bake(recipe_obj, new_data = train_readable_tbl)
+test_tbl  <- bake(recipe_obj, new_data = test_readable_tbl)
+
+# Creating the automl model
+
+# Split data into a training and a validation data frame
+split_h2o <- h2o.splitFrame(as.h2o(train_tbl), ratios = c(0.85), seed = 1234)
+train_h2o <- split_h2o[[1]]
+valid_h2o <- split_h2o[[2]]
+test_h2o  <- as.h2o(test_tbl)
+
+# Set the target and predictors
+y <- "Attrition"
+x <- setdiff(names(train_h2o), y)
+
+# Creating the models
+automl_models_h2o <- h2o.automl(
+  x = x,
+  y = y,
+  training_frame    = train_h2o,
+  validation_frame  = valid_h2o,
+  leaderboard_frame = test_h2o,
+  max_runtime_secs  = 45,
+  nfolds            = 10 
+)
+
+```
+Getting the best model and creating predictions to explain with Lime
+
+```{r}
+
+best_model_id <- automl_models_h2o@leaderboard %>%
+  as_tibble() %>%
+  slice(1) %>% 
+  pull(model_id)
+
+automl_leader <- h2o.getModel(best_model_id)
+
+predictions_tbl <- automl_leader %>% 
+    h2o.predict(newdata = as.h2o(test_tbl)) %>%
+    as_tibble() %>%
+    bind_cols(
+        test_tbl %>%
+            select(Attrition, EmployeeNumber)
+    )
+
+predictions_tbl
+```
+
+Creating explainer and explanation
+```{r}
+explainer <- train_tbl %>%
+    select(-Attrition) %>%
+    lime(
+        model           = automl_leader,
+        bin_continuous  = TRUE,
+        n_bins          = 4,
+        quantile_bins   = TRUE
+    )
+
+explanation <- test_tbl %>%
+    slice(1:10) %>%
+    select(-Attrition) %>%
+    lime::explain(
+
+        explainer = explainer,
+        # Because it is a binary classification model: 1
+        n_labels   = 1,
+        # number of features to be returned
+        n_features = 8,
+        # number of localized linear models
+        n_permutations = 5000,
+        # Let's start with 1
+        kernel_width   = 2
+    ) %>%
+    as.tibble() %>%
+    mutate(feature = as_factor(feature)) %>%
+    mutate(label = as_factor(label))
+
+explanation
+```
+
+Plotting the explanation
+
+```{r}
+case1 <- explanation %>%
+  filter(case == 1)
+
+g <- plot_features(explanation = case1, ncol = 1) 
+  
+g
+```
+
+
+
+## Part 2
+
+Plotting all the features
+
+```{r}
+plot_explanations(explanation) +
+  facet_wrap(explanation$label) +
+  geom_tile(aes(fill = feature_weight))
+```
+
+

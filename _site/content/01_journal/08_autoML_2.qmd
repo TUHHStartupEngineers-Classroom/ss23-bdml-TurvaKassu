@@ -7,7 +7,12 @@ library(h2o)
 library(skimr)
 library(rsample)
 library(recipes)
+library(cowplot)
+library(glue)
+library(dbplyr)
+library(tidyr)
 
+h2o.init()
 ```
 
 Reading data
@@ -71,7 +76,7 @@ test_h2o  <- as.h2o(test_tbl)
 y <- "went_on_backorder"
 x <- setdiff(names(train_h2o), y)
 
-# Creaeting the models
+# Creating the models
 automl_models_h2o <- h2o.automl(
   x = x,
   y = y,
@@ -103,7 +108,7 @@ h2o.getModel(best_model_id) %>%
   h2o.saveModel(path = "08_data\\models")
 ```
 
-### Predicting went_on_bacorder for testing data
+### Predicting went_on_backorder for testing data
 
 ```{r}
 # Loading model
@@ -116,6 +121,22 @@ typeof(predictions)
 predictions_tbl <- predictions %>% as_tibble()
 predictions_tbl
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
