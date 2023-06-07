@@ -177,6 +177,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <a class="dropdown-item" href="../../content/01_journal/08_autoML_2.qmd">
  <span class="dropdown-text">08 Auto ML 2</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../content/01_journal/09_performance.html">
+ <span class="dropdown-text">09 Performance measurements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../content/01_journal/10_Lime.html">
+ <span class="dropdown-text">10 Lime</span></a>
+  </li>  
     </ul>
 </li>
   <li class="nav-item">
@@ -203,76 +211,56 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <!-- main -->
 <main class="content" id="quarto-document-content"><p>#Challenge AutoML 2</p>
 <section id="downloading-libraries-and-data" class="level3"><h3 class="anchored" data-anchor-id="downloading-libraries-and-data">Downloading libraries and data</h3>
-<div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-1_2dd92bbc49a490b04c538a7e37df2385">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>#&gt; ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-#&gt; ✔ dplyr     1.1.2     ✔ readr     2.1.4
-#&gt; ✔ forcats   1.0.0     ✔ stringr   1.5.0
-#&gt; ✔ ggplot2   3.4.2     ✔ tibble    3.2.1
-#&gt; ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-#&gt; ✔ purrr     1.0.1     
-#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#&gt; ✖ dplyr::filter() masks stats::filter()
-#&gt; ✖ dplyr::lag()    masks stats::lag()
-#&gt; ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">library</span>(h2o)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-1_9686bdf85b9237f1c56998b5a292c99f">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="fu">library</span>(h2o)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="fu">library</span>(skimr)</span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="fu">library</span>(rsample)</span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="fu">library</span>(recipes)</span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="fu">library</span>(cowplot)</span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="fu">library</span>(glue)</span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="fu">library</span>(dbplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>#&gt; 
-#&gt; ----------------------------------------------------------------------
-#&gt; 
-#&gt; Your next step is to start H2O:
-#&gt;     &gt; h2o.init()
-#&gt; 
-#&gt; For H2O package documentation, ask for help:
-#&gt;     &gt; ??h2o
-#&gt; 
-#&gt; After starting H2O, you can use the Web UI at http://localhost:54321
-#&gt; For more information visit https://docs.h2o.ai
-#&gt; 
-#&gt; ----------------------------------------------------------------------
-#&gt; 
-#&gt; 
-#&gt; Attaching package: 'h2o'
-#&gt; 
-#&gt; The following objects are masked from 'package:lubridate':
-#&gt; 
-#&gt;     day, hour, month, week, year
-#&gt; 
-#&gt; The following objects are masked from 'package:stats':
-#&gt; 
-#&gt;     cor, sd, var
-#&gt; 
-#&gt; The following objects are masked from 'package:base':
-#&gt; 
-#&gt;     %*%, %in%, &amp;&amp;, ||, apply, as.factor, as.numeric, colnames,
-#&gt;     colnames&lt;-, ifelse, is.character, is.factor, is.numeric, log,
-#&gt;     log10, log1p, log2, round, signif, trunc</code></pre>
+#&gt; Attaching package: 'dbplyr'</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">library</span>(skimr)</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="fu">library</span>(rsample)</span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="fu">library</span>(recipes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>#&gt; 
-#&gt; Attaching package: 'recipes'
+<pre><code>#&gt; The following objects are masked from 'package:dplyr':
 #&gt; 
-#&gt; The following object is masked from 'package:stringr':
+#&gt;     ident, sql</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb4-2"><a href="#cb4-2"></a></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="fu">h2o.init</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&gt;  Connection successful!
 #&gt; 
-#&gt;     fixed
-#&gt; 
-#&gt; The following object is masked from 'package:stats':
-#&gt; 
-#&gt;     step</code></pre>
+#&gt; R is connected to the H2O cluster: 
+#&gt;     H2O cluster uptime:         10 hours 5 minutes 
+#&gt;     H2O cluster timezone:       Europe/Berlin 
+#&gt;     H2O data parsing timezone:  UTC 
+#&gt;     H2O cluster version:        3.40.0.4 
+#&gt;     H2O cluster version age:    1 month and 9 days 
+#&gt;     H2O cluster name:           H2O_started_from_R_35844_wae888 
+#&gt;     H2O cluster total nodes:    1 
+#&gt;     H2O cluster total memory:   3.01 GB 
+#&gt;     H2O cluster total cores:    16 
+#&gt;     H2O cluster allowed cores:  16 
+#&gt;     H2O cluster healthy:        TRUE 
+#&gt;     H2O Connection ip:          localhost 
+#&gt;     H2O Connection port:        54321 
+#&gt;     H2O Connection proxy:       NA 
+#&gt;     H2O Internal Security:      FALSE 
+#&gt;     R Version:                  R version 4.3.0 (2023-04-21 ucrt)</code></pre>
 </div>
 </div>
 <p>Reading data</p>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-2_6d8d3853309e0bf01cc5c75a06696614">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>backorder_tbl <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"08_data</span><span class="sc">\\</span><span class="st">product_backorder.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>backorder_tbl <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"08_data</span><span class="sc">\\</span><span class="st">product_backorder.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section><section id="getting-to-know-data" class="level3"><h3 class="anchored" data-anchor-id="getting-to-know-data">Getting to know data</h3>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-3_03a29027f55f6b5eec3a9b38aa4eece1">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="fu">skim</span>(backorder_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">skim</span>(backorder_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <caption>Data summary</caption>
@@ -653,46 +641,46 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <p>lead_time only column to have missing values (6%), lets fill them with average of the lead_time column</p>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-4_5d22e85e9f508b95e444805ca1d63116">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>backorder_tbl <span class="ot">&lt;-</span> backorder_tbl <span class="sc">%&gt;%</span></span>
-<span id="cb9-2"><a href="#cb9-2"></a>  <span class="fu">mutate</span>(<span class="at">lead_time =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(lead_time), <span class="fu">mean</span>(lead_time, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), </span>
-<span id="cb9-3"><a href="#cb9-3"></a>                            lead_time)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-4"><a href="#cb9-4"></a>  <span class="fu">mutate_if</span>(is.character, as.factor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>backorder_tbl <span class="ot">&lt;-</span> backorder_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>  <span class="fu">mutate</span>(<span class="at">lead_time =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(lead_time), <span class="fu">mean</span>(lead_time, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), </span>
+<span id="cb8-3"><a href="#cb8-3"></a>                            lead_time)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a>  <span class="fu">mutate_if</span>(is.character, as.factor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section><section id="processing-data-for-h20" class="level3"><h3 class="anchored" data-anchor-id="processing-data-for-h20">Processing data for h20</h3>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-5_e616cef12d4d7c3657dce04d9fe37b22">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="co"># H2O modeling</span></span>
-<span id="cb10-2"><a href="#cb10-2"></a></span>
-<span id="cb10-3"><a href="#cb10-3"></a></span>
-<span id="cb10-4"><a href="#cb10-4"></a></span>
-<span id="cb10-5"><a href="#cb10-5"></a><span class="fu">set.seed</span>(<span class="at">seed =</span> <span class="dv">1113</span>)</span>
-<span id="cb10-6"><a href="#cb10-6"></a>split_obj                       <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">initial_split</span>(backorder_tbl, <span class="at">prop =</span> <span class="fl">0.85</span>)</span>
-<span id="cb10-7"><a href="#cb10-7"></a>train_readable_tbl              <span class="ot">&lt;-</span> <span class="fu">training</span>(split_obj)</span>
-<span id="cb10-8"><a href="#cb10-8"></a>test_readable_tbl               <span class="ot">&lt;-</span> <span class="fu">testing</span>(split_obj)</span>
-<span id="cb10-9"><a href="#cb10-9"></a></span>
-<span id="cb10-10"><a href="#cb10-10"></a>recipe_obj <span class="ot">&lt;-</span> <span class="fu">recipe</span>(went_on_backorder <span class="sc">~</span>., <span class="at">data =</span> train_readable_tbl) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-11"><a href="#cb10-11"></a>    <span class="fu">update_role</span>(sku, <span class="at">new_role =</span> <span class="st">"id"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb10-12"><a href="#cb10-12"></a>    <span class="fu">step_zv</span>(<span class="fu">all_predictors</span>()) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-13"><a href="#cb10-13"></a>    <span class="fu">prep</span>()</span>
-<span id="cb10-14"><a href="#cb10-14"></a></span>
-<span id="cb10-15"><a href="#cb10-15"></a>train_tbl <span class="ot">&lt;-</span> <span class="fu">bake</span>(recipe_obj, <span class="at">new_data =</span> train_readable_tbl)</span>
-<span id="cb10-16"><a href="#cb10-16"></a>test_tbl  <span class="ot">&lt;-</span> <span class="fu">bake</span>(recipe_obj, <span class="at">new_data =</span> test_readable_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># H2O modeling</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a></span>
+<span id="cb9-3"><a href="#cb9-3"></a></span>
+<span id="cb9-4"><a href="#cb9-4"></a></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="fu">set.seed</span>(<span class="at">seed =</span> <span class="dv">1113</span>)</span>
+<span id="cb9-6"><a href="#cb9-6"></a>split_obj                       <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">initial_split</span>(backorder_tbl, <span class="at">prop =</span> <span class="fl">0.85</span>)</span>
+<span id="cb9-7"><a href="#cb9-7"></a>train_readable_tbl              <span class="ot">&lt;-</span> <span class="fu">training</span>(split_obj)</span>
+<span id="cb9-8"><a href="#cb9-8"></a>test_readable_tbl               <span class="ot">&lt;-</span> <span class="fu">testing</span>(split_obj)</span>
+<span id="cb9-9"><a href="#cb9-9"></a></span>
+<span id="cb9-10"><a href="#cb9-10"></a>recipe_obj <span class="ot">&lt;-</span> <span class="fu">recipe</span>(went_on_backorder <span class="sc">~</span>., <span class="at">data =</span> train_readable_tbl) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-11"><a href="#cb9-11"></a>    <span class="fu">update_role</span>(sku, <span class="at">new_role =</span> <span class="st">"id"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-12"><a href="#cb9-12"></a>    <span class="fu">step_zv</span>(<span class="fu">all_predictors</span>()) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-13"><a href="#cb9-13"></a>    <span class="fu">prep</span>()</span>
+<span id="cb9-14"><a href="#cb9-14"></a></span>
+<span id="cb9-15"><a href="#cb9-15"></a>train_tbl <span class="ot">&lt;-</span> <span class="fu">bake</span>(recipe_obj, <span class="at">new_data =</span> train_readable_tbl)</span>
+<span id="cb9-16"><a href="#cb9-16"></a>test_tbl  <span class="ot">&lt;-</span> <span class="fu">bake</span>(recipe_obj, <span class="at">new_data =</span> test_readable_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section><section id="running-the-h20-analysis" class="level3"><h3 class="anchored" data-anchor-id="running-the-h20-analysis">Running the h20 analysis</h3>
-<div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-6_0affbd0c673fd0e3422db6b4c7659757">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># Modeling</span></span>
-<span id="cb11-2"><a href="#cb11-2"></a><span class="fu">h2o.init</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-6_759f654fb2b42db147395b541c28b3cd">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="co"># Modeling</span></span>
+<span id="cb10-2"><a href="#cb10-2"></a><span class="fu">h2o.init</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt;  Connection successful!
 #&gt; 
 #&gt; R is connected to the H2O cluster: 
-#&gt;     H2O cluster uptime:         1 hours 5 minutes 
+#&gt;     H2O cluster uptime:         1 hours 45 minutes 
 #&gt;     H2O cluster timezone:       Europe/Berlin 
 #&gt;     H2O data parsing timezone:  UTC 
 #&gt;     H2O cluster version:        3.40.0.4 
-#&gt;     H2O cluster version age:    1 month and 8 days 
-#&gt;     H2O cluster name:           H2O_started_from_R_35844_drx718 
+#&gt;     H2O cluster version age:    1 month and 10 days 
+#&gt;     H2O cluster name:           H2O_started_from_R_35844_drs368 
 #&gt;     H2O cluster total nodes:    1 
-#&gt;     H2O cluster total memory:   3.14 GB 
+#&gt;     H2O cluster total memory:   2.63 GB 
 #&gt;     H2O cluster total cores:    16 
 #&gt;     H2O cluster allowed cores:  16 
 #&gt;     H2O cluster healthy:        TRUE 
@@ -702,8 +690,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 #&gt;     H2O Internal Security:      FALSE 
 #&gt;     R Version:                  R version 4.3.0 (2023-04-21 ucrt)</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="co"># Split data into a training and a validation data frame</span></span>
-<span id="cb13-2"><a href="#cb13-2"></a>split_h2o <span class="ot">&lt;-</span> <span class="fu">h2o.splitFrame</span>(<span class="fu">as.h2o</span>(train_tbl), <span class="at">ratios =</span> <span class="fu">c</span>(<span class="fl">0.85</span>), <span class="at">seed =</span> <span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co"># Split data into a training and a validation data frame</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a>split_h2o <span class="ot">&lt;-</span> <span class="fu">h2o.splitFrame</span>(<span class="fu">as.h2o</span>(train_tbl), <span class="at">ratios =</span> <span class="fu">c</span>(<span class="fl">0.85</span>), <span class="at">seed =</span> <span class="dv">1234</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt; 
   |                                                                            
@@ -711,9 +699,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   |                                                                            
   |======================================================================| 100%</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>train_h2o <span class="ot">&lt;-</span> split_h2o[[<span class="dv">1</span>]]</span>
-<span id="cb15-2"><a href="#cb15-2"></a>valid_h2o <span class="ot">&lt;-</span> split_h2o[[<span class="dv">2</span>]]</span>
-<span id="cb15-3"><a href="#cb15-3"></a>test_h2o  <span class="ot">&lt;-</span> <span class="fu">as.h2o</span>(test_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>train_h2o <span class="ot">&lt;-</span> split_h2o[[<span class="dv">1</span>]]</span>
+<span id="cb14-2"><a href="#cb14-2"></a>valid_h2o <span class="ot">&lt;-</span> split_h2o[[<span class="dv">2</span>]]</span>
+<span id="cb14-3"><a href="#cb14-3"></a>test_h2o  <span class="ot">&lt;-</span> <span class="fu">as.h2o</span>(test_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt; 
   |                                                                            
@@ -721,74 +709,74 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   |                                                                            
   |======================================================================| 100%</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="co"># Set the target and predictors</span></span>
-<span id="cb17-2"><a href="#cb17-2"></a>y <span class="ot">&lt;-</span> <span class="st">"went_on_backorder"</span></span>
-<span id="cb17-3"><a href="#cb17-3"></a>x <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(train_h2o), y)</span>
-<span id="cb17-4"><a href="#cb17-4"></a></span>
-<span id="cb17-5"><a href="#cb17-5"></a><span class="co"># Creaeting the models</span></span>
-<span id="cb17-6"><a href="#cb17-6"></a>automl_models_h2o <span class="ot">&lt;-</span> <span class="fu">h2o.automl</span>(</span>
-<span id="cb17-7"><a href="#cb17-7"></a>  <span class="at">x =</span> x,</span>
-<span id="cb17-8"><a href="#cb17-8"></a>  <span class="at">y =</span> y,</span>
-<span id="cb17-9"><a href="#cb17-9"></a>  <span class="at">training_frame    =</span> train_h2o,</span>
-<span id="cb17-10"><a href="#cb17-10"></a>  <span class="at">validation_frame  =</span> valid_h2o,</span>
-<span id="cb17-11"><a href="#cb17-11"></a>  <span class="at">leaderboard_frame =</span> test_h2o,</span>
-<span id="cb17-12"><a href="#cb17-12"></a>  <span class="at">max_runtime_secs  =</span> <span class="dv">45</span>,</span>
-<span id="cb17-13"><a href="#cb17-13"></a>  <span class="at">nfolds            =</span> <span class="dv">10</span> </span>
-<span id="cb17-14"><a href="#cb17-14"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="co"># Set the target and predictors</span></span>
+<span id="cb16-2"><a href="#cb16-2"></a>y <span class="ot">&lt;-</span> <span class="st">"went_on_backorder"</span></span>
+<span id="cb16-3"><a href="#cb16-3"></a>x <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(train_h2o), y)</span>
+<span id="cb16-4"><a href="#cb16-4"></a></span>
+<span id="cb16-5"><a href="#cb16-5"></a><span class="co"># Creating the models</span></span>
+<span id="cb16-6"><a href="#cb16-6"></a>automl_models_h2o <span class="ot">&lt;-</span> <span class="fu">h2o.automl</span>(</span>
+<span id="cb16-7"><a href="#cb16-7"></a>  <span class="at">x =</span> x,</span>
+<span id="cb16-8"><a href="#cb16-8"></a>  <span class="at">y =</span> y,</span>
+<span id="cb16-9"><a href="#cb16-9"></a>  <span class="at">training_frame    =</span> train_h2o,</span>
+<span id="cb16-10"><a href="#cb16-10"></a>  <span class="at">validation_frame  =</span> valid_h2o,</span>
+<span id="cb16-11"><a href="#cb16-11"></a>  <span class="at">leaderboard_frame =</span> test_h2o,</span>
+<span id="cb16-12"><a href="#cb16-12"></a>  <span class="at">max_runtime_secs  =</span> <span class="dv">45</span>,</span>
+<span id="cb16-13"><a href="#cb16-13"></a>  <span class="at">nfolds            =</span> <span class="dv">10</span> </span>
+<span id="cb16-14"><a href="#cb16-14"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt; 
   |                                                                            
   |                                                                      |   0%
   |                                                                            
   |==                                                                    |   2%
-#&gt; 16:00:07.21: User specified a validation frame with cross-validation still enabled. Please note that the models will still be validated using cross-validation only, the validation frame will be used to provide purely informative validation metrics on the trained models.
-#&gt; 16:00:07.25: AutoML: XGBoost is not available; skipping it.
+#&gt; 17:06:22.550: User specified a validation frame with cross-validation still enabled. Please note that the models will still be validated using cross-validation only, the validation frame will be used to provide purely informative validation metrics on the trained models.
+#&gt; 17:06:22.555: AutoML: XGBoost is not available; skipping it.
   |                                                                            
   |=====                                                                 |   7%
   |                                                                            
   |========                                                              |  12%
   |                                                                            
-  |============                                                          |  16%
+  |============                                                          |  17%
   |                                                                            
-  |===============                                                       |  21%
+  |===============                                                       |  22%
   |                                                                            
-  |===================                                                   |  28%
+  |===================                                                   |  27%
   |                                                                            
-  |=======================                                               |  32%
+  |======================                                                |  32%
   |                                                                            
   |==========================                                            |  37%
   |                                                                            
-  |=============================                                         |  42%
+  |==============================                                        |  43%
   |                                                                            
-  |=================================                                     |  47%
+  |=================================                                     |  48%
   |                                                                            
-  |====================================                                  |  51%
+  |=====================================                                 |  52%
   |                                                                            
-  |=======================================                               |  56%
+  |========================================                              |  57%
   |                                                                            
-  |===========================================                           |  61%
+  |===========================================                           |  62%
   |                                                                            
-  |==============================================                        |  66%
+  |===============================================                       |  67%
   |                                                                            
-  |=================================================                     |  70%
+  |==================================================                    |  72%
   |                                                                            
-  |=====================================================                 |  75%
+  |======================================================                |  77%
   |                                                                            
-  |========================================================              |  80%
+  |=========================================================             |  82%
   |                                                                            
-  |===========================================================           |  85%
+  |============================================================          |  86%
   |                                                                            
-  |==============================================================        |  89%
+  |===============================================================       |  91%
   |                                                                            
-  |==================================================================    |  94%
+  |===================================================================   |  95%
   |                                                                            
   |======================================================================| 100%</code></pre>
 </div>
 </div>
 </section><section id="viewing-the-results-on-leaderboard" class="level3"><h3 class="anchored" data-anchor-id="viewing-the-results-on-leaderboard">Viewing the results on leaderboard</h3>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-7_746dfd1b6dedf0823fe94d3ab7c91b49">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># Best models</span></span>
-<span id="cb19-2"><a href="#cb19-2"></a>automl_models_h2o<span class="sc">@</span>leaderboard</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="co"># Best models</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a>automl_models_h2o<span class="sc">@</span>leaderboard</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt;                                                  model_id       auc   logloss
 #&gt; 1                          GBM_4_AutoML_2_20230605_160007 0.9526824 0.1744281
@@ -807,26 +795,26 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 #&gt; 
 #&gt; [18 rows x 7 columns]</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="co"># Saving the id of best model</span></span>
-<span id="cb21-2"><a href="#cb21-2"></a>best_model_id <span class="ot">&lt;-</span> automl_models_h2o<span class="sc">@</span>leaderboard <span class="sc">%&gt;%</span></span>
-<span id="cb21-3"><a href="#cb21-3"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb21-4"><a href="#cb21-4"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb21-5"><a href="#cb21-5"></a>  <span class="fu">pull</span>(model_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># Saving the id of best model</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a>best_model_id <span class="ot">&lt;-</span> automl_models_h2o<span class="sc">@</span>leaderboard <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-5"><a href="#cb20-5"></a>  <span class="fu">pull</span>(model_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section><section id="pulling-the-best-model-saving" class="level3"><h3 class="anchored" data-anchor-id="pulling-the-best-model-saving">Pulling the best model &amp; Saving</h3>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-8_7c6158eb8bd213492efc09728e03b88e">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="fu">h2o.getModel</span>(best_model_id) <span class="sc">%&gt;%</span></span>
-<span id="cb22-2"><a href="#cb22-2"></a>  <span class="fu">h2o.saveModel</span>(<span class="at">path =</span> <span class="st">"08_data</span><span class="sc">\\</span><span class="st">models"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="fu">h2o.getModel</span>(best_model_id) <span class="sc">%&gt;%</span></span>
+<span id="cb21-2"><a href="#cb21-2"></a>  <span class="fu">h2o.saveModel</span>(<span class="at">path =</span> <span class="st">"08_data</span><span class="sc">\\</span><span class="st">models"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt; [1] "C:\\Users\\35844\\Vaihto\\ML\\ss23-bdml-TurvaKassu\\content\\01_journal\\08_data\\models\\GBM_4_AutoML_2_20230605_160007"</code></pre>
 </div>
 </div>
-</section><section id="predicting-went_on_bacorder-for-testing-data" class="level3"><h3 class="anchored" data-anchor-id="predicting-went_on_bacorder-for-testing-data">Predicting went_on_bacorder for testing data</h3>
+</section><section id="predicting-went_on_backorder-for-testing-data" class="level3"><h3 class="anchored" data-anchor-id="predicting-went_on_backorder-for-testing-data">Predicting went_on_backorder for testing data</h3>
 <div class="cell" data-hash="08_AutoML_2_cache/html/unnamed-chunk-9_3e754dea5091961c425d1d9da3851fac">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="co"># Loading model</span></span>
-<span id="cb24-2"><a href="#cb24-2"></a>stacked_ensemble_h2o <span class="ot">&lt;-</span> <span class="fu">h2o.loadModel</span>(<span class="st">"08_data</span><span class="sc">\\</span><span class="st">models</span><span class="sc">\\</span><span class="st">StackedEnsemble_BestOfFamily_2_AutoML_1_20230605_154513"</span>)</span>
-<span id="cb24-3"><a href="#cb24-3"></a></span>
-<span id="cb24-4"><a href="#cb24-4"></a>predictions <span class="ot">&lt;-</span> <span class="fu">h2o.predict</span>(stacked_ensemble_h2o, <span class="at">newdata =</span> <span class="fu">as.h2o</span>(test_tbl))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="co"># Loading model</span></span>
+<span id="cb23-2"><a href="#cb23-2"></a>stacked_ensemble_h2o <span class="ot">&lt;-</span> <span class="fu">h2o.loadModel</span>(<span class="st">"08_data</span><span class="sc">\\</span><span class="st">models</span><span class="sc">\\</span><span class="st">StackedEnsemble_BestOfFamily_2_AutoML_1_20230605_154513"</span>)</span>
+<span id="cb23-3"><a href="#cb23-3"></a></span>
+<span id="cb23-4"><a href="#cb23-4"></a>predictions <span class="ot">&lt;-</span> <span class="fu">h2o.predict</span>(stacked_ensemble_h2o, <span class="at">newdata =</span> <span class="fu">as.h2o</span>(test_tbl))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt; 
   |                                                                            
@@ -839,12 +827,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   |                                                                            
   |======================================================================| 100%</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="fu">typeof</span>(predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a><span class="fu">typeof</span>(predictions)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>#&gt; [1] "environment"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a>predictions_tbl <span class="ot">&lt;-</span> predictions <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
-<span id="cb28-2"><a href="#cb28-2"></a>predictions_tbl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a>predictions_tbl <span class="ot">&lt;-</span> predictions <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb27-2"><a href="#cb27-2"></a>predictions_tbl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 
 <div data-pagedtable="false">
