@@ -1,0 +1,98 @@
+Supervised Machine Learning (2)
+
+Starting with dowloading libraries
+
+```{r}
+# Standard
+library(tidyverse)
+
+# Modeling
+library(parsnip)
+library(tidymodels)
+
+# Preprocessing & Sampling
+library(recipes)
+library(rsample)
+
+# Modeling Error Metrics
+library(yardstick)
+
+# Plotting Decision Trees
+library(rpart.plot)
+
+library(readr)
+
+
+```
+
+Getting and wrangling data
+```{r}
+bike_features_tbl <- readRDS("06_data\\bike_features_tbl.rds") %>%
+  select(-where(~ all(is.na(.))))
+bike_orderlines_tbl <- readRDS("06_data\\bike_orderlines.rds")
+
+
+# Splitting the tibble into training and testing sets
+split_obj <- initial_split(bike_features_tbl, prop = 0.7)
+tr_data <- training(split_obj)
+tr_data <- tidyr::drop_na(tr_data)
+test_data <- testing(split_obj)
+
+
+
+
+```
+
+
+Creating the recipe object
+```{r}
+
+
+bike_recipe <- tr_data %>%
+  recipe(price ~ frame_material + weight + category_2 + Frame + Fork + bike_id, data = tr_data) %>%
+  
+  step_dummy(all_nominal(), -all_outcomes()) %>%
+  prep()
+
+```
+
+
+Then let's build a glmnet model
+```{r}
+
+model_glmnet <- linear_reg(mode    = "regression", 
+                                     penalty = 10, 
+                                     mixture = 0.1) %>%
+    set_engine("glmnet") 
+```
+
+
+Creating the workflow to parse everything
+```{r}
+bikes_wflow <- 
+  workflow() %>% 
+  add_model(model_glmnet) %>% 
+  add_recipe(bike_recipe)
+
+bikes_fit <- bikes_wflow %>% fit(data = tr_data)
+
+bikes_fit %>% 
+  pull_workflow_fit() %>% 
+  tidy()
+```
+
+```{r}
+predict(bikes_fit, test_data)
+```
+
+
+
+
+Evaluating the model
+```{r}
+predictions = predict(bikes_fit, test_data)
+
+# Create a yardstick tibble using the true labels and predicted values
+evaluation_data <- tibble::tibble(price = test_data$price, predicted = predictions)
+```
+
